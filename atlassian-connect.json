@@ -30,7 +30,7 @@
         "url": "/config"
       }
     ],
-    "confluenceMacros": [
+    "dynamicContentMacros": [
       {
         "key": "jira-issues-macro",
         "name": {
@@ -76,7 +76,7 @@
             "description": {
               "value": "Maximum number of issues to display"
             },
-            "type": "number",
+            "type": "int",
             "default": "20"
           },
           {
