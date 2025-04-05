@@ -1,0 +1,97 @@
+{
+  "name": "Jira Issues Macro",
+  "description": "Display real Jira issues in Confluence pages",
+  "key": "com.manus.jira-issues-macro",
+  "baseUrl": "{{localBaseUrl}}",
+  "vendor": {
+    "name": "Manus",
+    "url": "https://www.manus.ai"
+  },
+  "authentication": {
+    "type": "jwt"
+  },
+  "lifecycle": {
+    "installed": "/installed",
+    "uninstalled": "/uninstalled"
+  },
+  "scopes": [
+    "READ",
+    "WRITE"
+  ],
+  "apiVersion": 1,
+  "modules": {
+    "generalPages": [
+      {
+        "key": "jira-issues-config",
+        "location": "system.configure",
+        "name": {
+          "value": "Jira Issues Macro Configuration"
+        },
+        "url": "/config"
+      }
+    ],
+    "confluenceMacros": [
+      {
+        "key": "jira-issues-macro",
+        "name": {
+          "value": "Jira Issues"
+        },
+        "description": {
+          "value": "Display Jira issues in your Confluence page"
+        },
+        "url": "/macro",
+        "icon": {
+          "url": "/images/jira-icon.png"
+        },
+        "documentation": {
+          "url": "/documentation"
+        },
+        "outputType": "block",
+        "bodyType": "none",
+        "editor": {
+          "url": "/macro-editor",
+          "width": "800px",
+          "height": "600px"
+        },
+        "categories": [
+          "visuals"
+        ],
+        "parameters": [
+          {
+            "identifier": "jql",
+            "name": {
+              "value": "JQL Query"
+            },
+            "description": {
+              "value": "JQL Query to filter issues"
+            },
+            "type": "string",
+            "required": true
+          },
+          {
+            "identifier": "maxResults",
+            "name": {
+              "value": "Maximum Results"
+            },
+            "description": {
+              "value": "Maximum number of issues to display"
+            },
+            "type": "number",
+            "default": "20"
+          },
+          {
+            "identifier": "columns",
+            "name": {
+              "value": "Columns"
+            },
+            "description": {
+              "value": "Columns to display"
+            },
+            "type": "string",
+            "default": "type,key,summary,assignee,priority,status,updated"
+          }
+        ]
+      }
+    ]
+  }
+}
