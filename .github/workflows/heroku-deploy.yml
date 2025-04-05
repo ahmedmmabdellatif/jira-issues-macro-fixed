@@ -1,0 +1,63 @@
+name: Deploy to Heroku
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_name:
+        description: 'Heroku app name'
+        required: true
+        default: 'jira-issues-macro-fixed-new'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+          
+      - name: Install dependencies
+        run: npm install
+        
+      - name: Login to Heroku
+        uses: akhileshns/heroku-deploy@v3.12.12
+        with:
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+          heroku_app_name: ${{ github.event.inputs.app_name }}
+          heroku_email: "atlassianintelligence@gmail.com"
+          justlogin: true
+          
+      - name: Create Heroku app if it doesn't exist
+        run: |
+          if ! heroku apps:info ${{ github.event.inputs.app_name }} &> /dev/null; then
+            heroku apps:create ${{ github.event.inputs.app_name }}
+            echo "Created new Heroku app: ${{ github.event.inputs.app_name }}"
+          else
+            echo "Using existing Heroku app: ${{ github.event.inputs.app_name }}"
+          fi
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+          
+      - name: Deploy to Heroku
+        uses: akhileshns/heroku-deploy@v3.12.12
+        with:
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+          heroku_app_name: ${{ github.event.inputs.app_name }}
+          heroku_email: "atlassianintelligence@gmail.com"
+          
+      - name: Verify deployment
+        run: |
+          echo "Verifying deployment..."
+          STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://${{ github.event.inputs.app_name }}.herokuapp.com/)
+          if [ "$STATUS_CODE" -eq 200 ] || [ "$STATUS_CODE" -eq 302 ]; then
+            echo "Deployment successful! App is running at https://${{ github.event.inputs.app_name }}.herokuapp.com/"
+            echo "Descriptor URL: https://${{ github.event.inputs.app_name }}.herokuapp.com/atlassian-connect.json"
+          else
+            echo "Deployment verification failed. Status code: $STATUS_CODE"
+            exit 1
+          fi
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
