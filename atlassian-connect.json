@@ -2,7 +2,7 @@
   "name": "Jira Issues Macro",
   "description": "Display real Jira issues in Confluence pages",
   "key": "com.manus.jira-issues-macro",
-  "baseUrl": "{{localBaseUrl}}",
+  "baseUrl": "https://jira-issues-macro-fixed-new-382557688069.herokuapp.com",
   "vendor": {
     "name": "Manus",
     "url": "https://www.manus.ai"
@@ -11,8 +11,8 @@
     "type": "jwt"
   },
   "lifecycle": {
-    "installed": "/installed",
-    "uninstalled": "/uninstalled"
+    "installed": "/lifecycle",
+    "uninstalled": "/lifecycle"
   },
   "scopes": [
     "READ",
@@ -93,5 +93,9 @@
         ]
       }
     ]
-  }
+  },
+  "apiMigrations": {
+    "gdpr": true
+  },
+  "enableLicensing": false
 }
