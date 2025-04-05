@@ -22,6 +22,11 @@ jobs:
       - name: Install dependencies
         run: npm install
         
+      - name: Install Heroku CLI
+        run: |
+          curl https://cli-assets.heroku.com/install.sh | sh
+          heroku --version
+        
       - name: Login to Heroku
         uses: akhileshns/heroku-deploy@v3.12.12
         with:
@@ -33,6 +38,7 @@ jobs:
       - name: Create Heroku app if it doesn't exist
         run: |
           if ! heroku apps:info ${{ github.event.inputs.app_name }} &> /dev/null; then
+            echo "Creating new Heroku app: ${{ github.event.inputs.app_name }}"
             heroku apps:create ${{ github.event.inputs.app_name }}
             echo "Created new Heroku app: ${{ github.event.inputs.app_name }}"
           else
@@ -51,12 +57,47 @@ jobs:
       - name: Verify deployment
         run: |
           echo "Verifying deployment..."
-          STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://${{ github.event.inputs.app_name }}.herokuapp.com/)
-          if [ "$STATUS_CODE" -eq 200 ] || [ "$STATUS_CODE" -eq 302 ]; then
-            echo "Deployment successful! App is running at https://${{ github.event.inputs.app_name }}.herokuapp.com/"
-            echo "Descriptor URL: https://${{ github.event.inputs.app_name }}.herokuapp.com/atlassian-connect.json"
-          else
-            echo "Deployment verification failed. Status code: $STATUS_CODE"
+          echo "Waiting for app to start up..."
+          sleep 30
+          
+          # Try multiple times to account for startup delay
+          MAX_RETRIES=5
+          RETRY_COUNT=0
+          SUCCESS=false
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ] && [ "$SUCCESS" = false ]; do
+            echo "Attempt $(($RETRY_COUNT + 1)) of $MAX_RETRIES"
+            STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://${{ github.event.inputs.app_name }}.herokuapp.com/ || echo "failed")
+            
+            if [ "$STATUS_CODE" = "200" ] || [ "$STATUS_CODE" = "302" ]; then
+              SUCCESS=true
+              echo "✅ Deployment successful! App is running at https://${{ github.event.inputs.app_name }}.herokuapp.com/"
+              echo "✅ Descriptor URL: https://${{ github.event.inputs.app_name }}.herokuapp.com/atlassian-connect.json"
+              
+              # Verify descriptor URL
+              DESCRIPTOR_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://${{ github.event.inputs.app_name }}.herokuapp.com/atlassian-connect.json || echo "failed")
+              if [ "$DESCRIPTOR_STATUS" = "200" ]; then
+                echo "✅ Descriptor URL is accessible"
+              else
+                echo "⚠️ Descriptor URL returned status code: $DESCRIPTOR_STATUS"
+              fi
+            else
+              echo "⚠️ App not responding correctly. Status code: $STATUS_CODE"
+              echo "Checking Heroku logs..."
+              heroku logs --tail --app ${{ github.event.inputs.app_name }} --num 50
+              
+              RETRY_COUNT=$(($RETRY_COUNT + 1))
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                echo "Retrying in 30 seconds..."
+                sleep 30
+              fi
+            fi
+          done
+          
+          if [ "$SUCCESS" = false ]; then
+            echo "❌ Deployment verification failed after $MAX_RETRIES attempts."
+            echo "Please check the Heroku logs for more details:"
+            echo "heroku logs --tail --app ${{ github.event.inputs.app_name }}"
             exit 1
           fi
         env:
