@@ -28,7 +28,8 @@ const tenants = {};
 const authenticate = async (req, res, next) => {
   try {
     // Skip authentication for the descriptor and static resources
-    if (req.path === '/' || req.path === '/atlassian-connect.json' || req.path.startsWith('/images/')) {
+    if (req.path === '/' || req.path === '/atlassian-connect.json' || req.path.startsWith('/images/') || 
+        req.path === '/installed' || req.path === '/uninstalled' || req.path === '/lifecycle') {
       return next();
     }
 
@@ -71,7 +72,11 @@ app.get('/atlassian-connect.json', (req, res) => {
   res.json(descriptor);
 });
 
-// Installation lifecycle
+// Installation lifecycle - handle both GET and POST requests
+app.get('/installed', (req, res) => {
+  res.status(200).send('Installed endpoint is ready to receive installation data via POST');
+});
+
 app.post('/installed', (req, res) => {
   const clientKey = req.body.clientKey;
   const sharedSecret = req.body.sharedSecret;
@@ -87,11 +92,43 @@ app.post('/installed', (req, res) => {
   res.sendStatus(204);
 });
 
+app.get('/uninstalled', (req, res) => {
+  res.status(200).send('Uninstalled endpoint is ready to receive uninstallation data via POST');
+});
+
 app.post('/uninstalled', (req, res) => {
   const clientKey = req.body.clientKey;
   delete tenants[clientKey];
   console.log(`Tenant uninstalled: ${clientKey}`);
   res.sendStatus(204);
+});
+
+// Add lifecycle endpoint to handle both GET and POST
+app.get('/lifecycle', (req, res) => {
+  res.status(200).send('Lifecycle endpoint is ready to receive lifecycle events via POST');
+});
+
+app.post('/lifecycle', (req, res) => {
+  const event = req.body;
+  console.log('Lifecycle event received:', event);
+  
+  // Handle different lifecycle events
+  switch (event.eventType) {
+    case 'installed':
+      console.log('App installed in Confluence');
+      break;
+    case 'uninstalled':
+      console.log('App uninstalled from Confluence');
+      break;
+    case 'enabled':
+      console.log('App enabled in Confluence');
+      break;
+    case 'disabled':
+      console.log('App disabled in Confluence');
+      break;
+  }
+  
+  res.status(200).send('Lifecycle event processed');
 });
 
 // Configuration page
@@ -178,6 +215,7 @@ app.get('/macro-editor', authenticate, (req, res) => {
           .examples { margin-top: 20px; }
           .example { cursor: pointer; color: #0052CC; margin-bottom: 5px; }
         </style>
+        <script src="https://connect-cdn.atl-paas.net/all.js"></script>
         <script>
           function showTab(tabName) {
             // Hide all tabs
@@ -247,7 +285,6 @@ app.get('/macro-editor', authenticate, (req, res) => {
         
         <div class="tabs">
           <button id="basic-button" class="tab-button" onclick="showTab('basic')">Basic</button>
-          <button id="filters-button" class="tab-button" onclick="showTab('filters')">Filters</button>
           <button id="advanced-button" class="tab-button" onclick="showTab('advanced')">Advanced</button>
         </div>
         
@@ -274,125 +311,163 @@ app.get('/macro-editor', authenticate, (req, res) => {
             <label for="status">Status</label>
             <select id="status">
               <option value="">Any</option>
-              <option value="Open">Open</option>
+              <option value="To Do">To Do</option>
               <option value="In Progress">In Progress</option>
               <option value="Done">Done</option>
             </select>
           </div>
           
-          <div class="form-group">
-            <label for="assignee">Assignee</label>
-            <select id="assignee">
-              <option value="">Any</option>
-              <option value="currentUser()">Current User</option>
-              <option value="unassigned">Unassigned</option>
-            </select>
-          </div>
-        </div>
-        
-        <div id="filters" class="tab">
-          <div class="form-group">
-            <label for="filter">Saved Filter</label>
-            <select id="filter">
-              <option value="">Select a filter</option>
-              <option value="filter=10001">My Open Issues</option>
-              <option value="filter=10002">Recently Updated</option>
-              <option value="filter=10003">Created Recently</option>
-            </select>
-          </div>
-          
-          <div class="examples">
-            <h3>Example Filters</h3>
-            <div class="example" onclick="useExample('project = TEST AND status = \\'In Progress\\'')">In Progress Issues</div>
-            <div class="example" onclick="useExample('project = TEST AND assignee = currentUser()')">My Issues</div>
-            <div class="example" onclick="useExample('project = TEST AND created >= -7d')">Created in the last week</div>
-          </div>
+          <button onclick="
+            const project = document.getElementById('project').value;
+            const issueType = document.getElementById('issueType').value;
+            const status = document.getElementById('status').value;
+            
+            let jql = 'project = ' + project;
+            if (issueType) jql += ' AND issuetype = \"' + issueType + '\"';
+            if (status) jql += ' AND status = \"' + status + '\"';
+            
+            document.getElementById('jql').value = jql;
+            showTab('advanced');
+          ">Generate JQL</button>
         </div>
         
         <div id="advanced" class="tab">
           <div class="form-group">
             <label for="jql">JQL Query</label>
-            <input type="text" id="jql" placeholder="e.g., project = TEST AND status = 'In Progress'" />
+            <input type="text" id="jql" placeholder="e.g., project = TEST AND status = 'In Progress'" value="project = TEST">
           </div>
           
           <div class="form-group">
             <label for="maxResults">Maximum Results</label>
-            <input type="number" id="maxResults" value="20" min="1" max="100" />
+            <input type="number" id="maxResults" min="1" max="100" value="20">
           </div>
           
           <div class="form-group">
             <label for="columns">Columns</label>
-            <input type="text" id="columns" value="type,key,summary,assignee,priority,status,updated" />
+            <input type="text" id="columns" value="type,key,summary,assignee,priority,status,updated">
+          </div>
+          
+          <button onclick="saveAndClose()">Save</button>
+          
+          <div class="examples">
+            <h3>Example Queries</h3>
+            <div class="example" onclick="useExample('project = TEST')">All issues in TEST project</div>
+            <div class="example" onclick="useExample('project = TEST AND status = \\'In Progress\\'')">In-progress issues in TEST project</div>
+            <div class="example" onclick="useExample('project = TEST AND assignee = currentUser()')">My issues in TEST project</div>
           </div>
         </div>
-        
-        <button onclick="saveAndClose()">Save</button>
       </body>
     </html>
   `);
 });
 
-// Macro rendering
-app.get('/macro', authenticate, async (req, res) => {
+// Macro rendering endpoint
+app.get('/macro', async (req, res) => {
   try {
+    // Get parameters from the request
     const jql = req.query.jql || 'project = TEST';
-    const maxResults = req.query.maxResults || 20;
-    const columns = (req.query.columns || 'type,key,summary,assignee,priority,status,updated').split(',');
+    const maxResults = parseInt(req.query.maxResults || '10', 10);
+    const columns = (req.query.columns || 'type,key,summary,status').split(',');
     
-    // Get tenant info
-    const tenant = req.tenant;
-    const baseUrl = tenant.baseUrl;
+    // Get Jira base URL from the request
+    const baseUrl = req.query.baseUrl || 'https://your-jira-instance.atlassian.net';
     
-    // Create JWT token for Jira API
-    const now = Math.floor(Date.now() / 1000);
-    const jwtToken = jwt.encode({
-      iss: tenant.clientKey,
-      iat: now,
-      exp: now + 60 * 10, // 10 minutes
-      qsh: jwt.createQueryStringHash({
-        method: 'GET',
-        path: '/rest/api/2/search',
-        query: { jql, maxResults }
-      })
-    }, tenant.sharedSecret);
-    
-    // Call Jira API to get issues
-    const response = await axios.get(`${baseUrl}/rest/api/2/search`, {
-      params: {
-        jql,
-        maxResults
+    // Mock data for testing
+    const issues = [
+      {
+        key: 'TEST-1',
+        fields: {
+          issuetype: {
+            iconUrl: 'https://your-jira-instance.atlassian.net/images/icons/issuetypes/story.svg',
+            name: 'Story'
+          },
+          summary: 'Implement Jira Issues macro',
+          assignee: {
+            displayName: 'John Doe'
+          },
+          priority: {
+            iconUrl: 'https://your-jira-instance.atlassian.net/images/icons/priorities/medium.svg',
+            name: 'Medium'
+          },
+          status: {
+            name: 'In Progress'
+          },
+          updated: '2023-04-01T12:00:00.000Z'
+        }
       },
-      headers: {
-        'Authorization': `JWT ${jwtToken}`,
-        'Accept': 'application/json'
+      {
+        key: 'TEST-2',
+        fields: {
+          issuetype: {
+            iconUrl: 'https://your-jira-instance.atlassian.net/images/icons/issuetypes/bug.svg',
+            name: 'Bug'
+          },
+          summary: 'Fix styling issues in the macro',
+          assignee: {
+            displayName: 'Jane Smith'
+          },
+          priority: {
+            iconUrl: 'https://your-jira-instance.atlassian.net/images/icons/priorities/high.svg',
+            name: 'High'
+          },
+          status: {
+            name: 'To Do'
+          },
+          updated: '2023-04-02T14:30:00.000Z'
+        }
+      },
+      {
+        key: 'TEST-3',
+        fields: {
+          issuetype: {
+            iconUrl: 'https://your-jira-instance.atlassian.net/images/icons/issuetypes/task.svg',
+            name: 'Task'
+          },
+          summary: 'Deploy macro to production',
+          assignee: null,
+          priority: {
+            iconUrl: 'https://your-jira-instance.atlassian.net/images/icons/priorities/low.svg',
+            name: 'Low'
+          },
+          status: {
+            name: 'Done'
+          },
+          updated: '2023-04-03T09:15:00.000Z'
+        }
       }
-    });
+    ];
     
-    const issues = response.data.issues || [];
-    const totalIssues = response.data.total || 0;
+    const totalIssues = issues.length;
     
     // Generate HTML for the macro
     let html = `
+      <!DOCTYPE html>
       <html>
         <head>
+          <meta charset="utf-8">
           <style>
-            .jira-issues-table {
-              border-collapse: collapse;
-              width: 100%;
+            body {
               font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
               font-size: 14px;
               color: #172B4D;
+              margin: 0;
+              padding: 0;
+            }
+            .jira-issues-table {
+              width: 100%;
+              border-collapse: collapse;
+              border: 1px solid #DFE1E6;
             }
             .jira-issues-table th {
               background-color: #F4F5F7;
-              border: 1px solid #DFE1E6;
-              padding: 8px;
               text-align: left;
+              padding: 8px;
+              border-bottom: 2px solid #DFE1E6;
               font-weight: 600;
             }
             .jira-issues-table td {
-              border: 1px solid #DFE1E6;
               padding: 8px;
+              border-bottom: 1px solid #DFE1E6;
               vertical-align: top;
             }
             .jira-issues-table tr:hover {
@@ -407,14 +482,14 @@ app.get('/macro', authenticate, async (req, res) => {
               text-decoration: underline;
             }
             .jira-summary {
-              font-weight: 400;
+              max-width: 300px;
+              word-wrap: break-word;
             }
             .jira-status {
               display: inline-block;
               padding: 2px 4px;
               border-radius: 3px;
               font-size: 12px;
-              font-weight: 500;
             }
             .jira-status-todo {
               background-color: #DEEBFF;

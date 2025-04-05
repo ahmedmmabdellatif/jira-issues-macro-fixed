@@ -11,8 +11,8 @@
     "type": "jwt"
   },
   "lifecycle": {
-    "installed": "/lifecycle",
-    "uninstalled": "/lifecycle"
+    "installed": "/installed",
+    "uninstalled": "/uninstalled"
   },
   "scopes": [
     "READ",
