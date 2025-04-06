@@ -21,7 +21,7 @@
         "description": {
           "value": "Display Jira issues in your Confluence page"
         },
-        "url": "/macro",
+        "url": "/",
         "icon": {
           "url": "/images/jira-icon.png"
         },
