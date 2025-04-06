@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Jira Issues Macro</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+      font-size: 14px;
+      color: #172B4D;
+      margin: 0;
+      padding: 20px;
+    }
+    .jira-issues-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid #DFE1E6;
+    }
+    .jira-issues-table th {
+      background-color: #F4F5F7;
+      text-align: left;
+      padding: 8px;
+      border-bottom: 2px solid #DFE1E6;
+      font-weight: 600;
+    }
+    .jira-issues-table td {
+      padding: 8px;
+      border-bottom: 1px solid #DFE1E6;
+      vertical-align: top;
+    }
+    .jira-issues-table tr:hover {
+      background-color: #F4F5F7;
+    }
+    .jira-key {
+      color: #0052CC;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .jira-key:hover {
+      text-decoration: underline;
+    }
+    .jira-summary {
+      max-width: 300px;
+      word-wrap: break-word;
+    }
+    .jira-status {
+      display: inline-block;
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-size: 12px;
+    }
+    .jira-status-todo {
+      background-color: #DEEBFF;
+      color: #0747A6;
+    }
+    .jira-status-inprogress {
+      background-color: #E6FCFF;
+      color: #006644;
+    }
+    .jira-status-done {
+      background-color: #E3FCEF;
+      color: #006644;
+    }
+    .jira-footer {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #6B778C;
+      display: flex;
+      justify-content: space-between;
+    }
+    .jira-type-icon, .jira-priority-icon {
+      width: 16px;
+      height: 16px;
+      vertical-align: middle;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #172B4D;
+      margin-bottom: 20px;
+    }
+    .description {
+      margin-bottom: 30px;
+      line-height: 1.5;
+    }
+    .error-container {
+      border: 1px solid #FF5630;
+      background-color: #FFEBE6;
+      padding: 10px;
+      border-radius: 3px;
+      margin-bottom: 20px;
+    }
+    .error-title {
+      color: #DE350B;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .error-message {
+      color: #172B4D;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Jira Issues Macro</h1>
+    <div class="description">
+      <p>This is a static implementation of the Jira Issues Macro for Confluence. It displays sample Jira issues in a table format.</p>
+      <p>To use this macro in your Confluence instance, install it from the Atlassian Marketplace or by using the descriptor URL.</p>
+    </div>
+    
+    <table class="jira-issues-table">
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Key</th>
+          <th>Summary</th>
+          <th>Assignee</th>
+          <th>Priority</th>
+          <th>Status</th>
+          <th>Updated</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><img src="images/story.svg" class="jira-type-icon" alt="Story" title="Story" /></td>
+          <td><a href="#" class="jira-key">TEST-1</a></td>
+          <td class="jira-summary">Implement Jira Issues macro</td>
+          <td>John Doe</td>
+          <td><img src="images/medium.svg" class="jira-priority-icon" alt="Medium" title="Medium" /></td>
+          <td><span class="jira-status jira-status-inprogress">In Progress</span></td>
+          <td>4/1/2023, 12:00:00 PM</td>
+        </tr>
+        <tr>
+          <td><img src="images/bug.svg" class="jira-type-icon" alt="Bug" title="Bug" /></td>
+          <td><a href="#" class="jira-key">TEST-2</a></td>
+          <td class="jira-summary">Fix styling issues in the macro</td>
+          <td>Jane Smith</td>
+          <td><img src="images/high.svg" class="jira-priority-icon" alt="High" title="High" /></td>
+          <td><span class="jira-status jira-status-todo">To Do</span></td>
+          <td>4/2/2023, 2:30:00 PM</td>
+        </tr>
+        <tr>
+          <td><img src="images/task.svg" class="jira-type-icon" alt="Task" title="Task" /></td>
+          <td><a href="#" class="jira-key">TEST-3</a></td>
+          <td class="jira-summary">Deploy macro to production</td>
+          <td>Unassigned</td>
+          <td><img src="images/low.svg" class="jira-priority-icon" alt="Low" title="Low" /></td>
+          <td><span class="jira-status jira-status-done">Done</span></td>
+          <td>4/3/2023, 9:15:00 AM</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="jira-footer">
+      <div>Showing 3 of 3 issues</div>
+      <div>Synced just now</div>
+    </div>
+  </div>
+</body>
+</html>

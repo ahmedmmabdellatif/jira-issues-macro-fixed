@@ -12,16 +12,6 @@
   },
   "apiVersion": 1,
   "modules": {
-    "generalPages": [
-      {
-        "key": "jira-issues-config",
-        "location": "system.configure",
-        "name": {
-          "value": "Jira Issues Macro Configuration"
-        },
-        "url": "/config"
-      }
-    ],
     "dynamicContentMacros": [
       {
         "key": "jira-issues-macro",
@@ -35,19 +25,8 @@
         "icon": {
           "url": "/images/jira-icon.png"
         },
-        "documentation": {
-          "url": "/documentation"
-        },
         "outputType": "block",
         "bodyType": "none",
-        "editor": {
-          "url": "/macro-editor",
-          "width": "800px",
-          "height": "600px"
-        },
-        "categories": [
-          "visuals"
-        ],
         "parameters": [
           {
             "identifier": "jql",
